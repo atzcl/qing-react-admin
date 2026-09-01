@@ -38,6 +38,8 @@ export interface AppUser {
 export interface AppTab {
   affix?: boolean
   definitionPath: string
+  /** 当前标签最后一次访问的完整地址，包含查询参数与 hash。 */
+  href: string
   params: Record<string, string>
   path: string
   revision?: number

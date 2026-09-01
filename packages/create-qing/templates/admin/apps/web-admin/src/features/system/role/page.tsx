@@ -5,11 +5,13 @@ import { App, Card, Checkbox, DatePicker, Drawer, Form, Input, Select, Switch } 
 import type { TableProps } from 'antd'
 import type { Dayjs } from 'dayjs'
 import { useState } from 'react'
+import { z } from 'zod'
 
 import { ButtonList } from '~/components/button-list'
 import { PageContainer } from '~/components/page-container'
 import { ProTable } from '~/components/pro-table'
 import { QueryForm } from '~/components/query-form'
+import { queryFormDayjsSchema } from '~/core/query-form-search'
 
 import { systemApi, systemQueryKeys } from '../_shared/model'
 import type { BinaryStatus, RoleFormValues, RoleRecord } from '../_shared/model'
@@ -22,6 +24,14 @@ interface RoleQueryValues {
   roleId?: string
   status?: BinaryStatus
 }
+
+const roleQuerySchema = z.object({
+  createTime: z.tuple([queryFormDayjsSchema, queryFormDayjsSchema]).optional(),
+  name: z.string().optional(),
+  remark: z.string().optional(),
+  roleId: z.string().optional(),
+  status: z.union([z.literal(0), z.literal(1)]).optional(),
+})
 
 type RoleMutationAction =
   | { type: 'create'; values: RoleFormValues }
@@ -191,7 +201,7 @@ export default function RolesPage() {
           ]}
           onQuery={setQuery}
           onReset={setQuery}
-          urlSync={{ namespace: 'system-role' }}
+          urlSync={{ namespace: 'system-role', schema: roleQuerySchema }}
           values={query}
         />
       </Card>
@@ -201,6 +211,7 @@ export default function RolesPage() {
         dataSource={filtered}
         headerTitle="角色列表"
         loading={rolesQuery.isFetching || roleMutation.isPending}
+        preferenceKey="system-role"
         onRefresh={async () => {
           await rolesQuery.refetch()
           await message.success('角色列表已刷新')

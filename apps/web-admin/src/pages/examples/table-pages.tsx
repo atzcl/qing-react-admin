@@ -14,6 +14,7 @@ import { ProTable } from '~/components/pro-table'
 import type { ProTableProps } from '~/components/pro-table'
 import { QueryForm } from '~/components/query-form'
 import { readPersisted, removePersisted, writePersisted } from '~/core/persisted-storage'
+import { queryFormDayjsSchema } from '~/core/query-form-search'
 
 interface BasicRow {
   address: string
@@ -73,6 +74,7 @@ export function BasicTableExample() {
         columns={basicColumns}
         dataSource={basicRows}
         headerTitle="基础列表"
+        preferenceKey="example-table-basic"
         loading={loading}
         onRow={(row) => ({ onClick: () => void message.info(`cell-click: ${row.name}`) })}
         pagination={false}
@@ -198,6 +200,7 @@ export function RemoteTableExample() {
         headerTitle="数据列表"
         loading={loading}
         pagination={{ current: page, onChange: setPage, pageSize: 10, showSizeChanger: true }}
+        preferenceKey="example-table-remote"
         stableRowKey="id"
         rowSelection={{}}
         toolbarActionList={[
@@ -325,6 +328,7 @@ export function TreeTableExample() {
           { dataIndex: 'type', title: 'Type' },
           { dataIndex: 'date', title: 'Date' },
         ]}
+        preferenceKey="example-table-tree"
         dataSource={treeRows}
         expandable={{
           expandedRowKeys,
@@ -369,7 +373,7 @@ export function FixedTableExample() {
   ]
   return (
     <PageContainer title={undefined}>
-      <ProductTable columns={columns} scroll={{ x: 1920 }} />
+      <ProductTable columns={columns} preferenceKey="example-table-fixed" scroll={{ x: 1920 }} />
     </PageContainer>
   )
 }
@@ -424,7 +428,12 @@ export function CustomCellTableExample() {
   ]
   return (
     <PageContainer title={undefined}>
-      <ProductTable columns={columns} data={data} scroll={{ x: 1240 }} />
+      <ProductTable
+        columns={columns}
+        data={data}
+        preferenceKey="example-table-custom-cell"
+        scroll={{ x: 1240 }}
+      />
     </PageContainer>
   )
 }
@@ -437,6 +446,14 @@ export function TableFormExample() {
     price?: string
     productName?: string
   }
+
+  const searchFormSchema = z.object({
+    category: z.string().optional(),
+    color: z.string().optional(),
+    date: z.tuple([queryFormDayjsSchema, queryFormDayjsSchema]).optional(),
+    price: z.string().optional(),
+    productName: z.string().optional(),
+  })
 
   const { message } = App.useApp()
   const [query, setQuery] = useState<SearchFormValues>({})
@@ -496,10 +513,15 @@ export function TableFormExample() {
           ]}
           onQuery={submit}
           onReset={setQuery}
-          urlSync={{ namespace: 'pro-table-form' }}
+          urlSync={{ namespace: 'pro-table-form', schema: searchFormSchema }}
         />
       </Card>
-      <ProductTable data={filteredRows} headerTitle="数据列表" rowSelection={{}} />
+      <ProductTable
+        data={filteredRows}
+        headerTitle="数据列表"
+        preferenceKey="example-table-form"
+        rowSelection={{}}
+      />
     </PageContainer>
   )
 }
@@ -627,6 +649,7 @@ function EditableProductTable({ rowMode }: { rowMode: boolean }) {
       data={data}
       onRow={(row) => ({ onClick: () => startRowEdit(row) })}
       pagination={false}
+      preferenceKey={rowMode ? 'example-table-edit-row' : 'example-table-edit-cell'}
     />
   )
 }
@@ -714,6 +737,7 @@ export function ViewedTableExample() {
       <ProductTable
         columns={columns}
         headerTitle="已查看行标记"
+        preferenceKey="example-table-viewed"
         onRow={(row) => ({
           style: customStyle && viewed.includes(row.id) ? { backgroundColor: 'gray' } : undefined,
         })}

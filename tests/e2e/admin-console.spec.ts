@@ -1,8 +1,43 @@
+import { dirname, resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
+
 import { expect, test } from '@playwright/test'
 import type { Page } from '@playwright/test'
 
-import { pageCountByGroup, pageManifest } from '../../apps/web-admin/src/core/page-manifest'
-import type { PageManifestEntry } from '../../apps/web-admin/src/core/page-manifest'
+import { readFeaturePaths, readShowcasePaths } from '../../scripts/admin-route-contract.mjs'
+
+interface PageManifestEntry {
+  group: 'dashboard' | 'demos' | 'examples' | 'profile' | 'system'
+  path: string
+}
+
+const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..')
+const [featureEntries, showcaseEntries] = await Promise.all([
+  readFeaturePaths(resolve(repositoryRoot, 'apps/web-admin/src/features')),
+  readShowcasePaths(resolve(repositoryRoot, 'apps/web-admin/src/core/showcase-catalog.tsx')),
+])
+
+function manifestGroup(group: string): PageManifestEntry['group'] {
+  if (group === 'utility') return 'profile'
+  if (group === 'dashboard' || group === 'demos' || group === 'examples' || group === 'system') {
+    return group
+  }
+  throw new Error(`Unknown standalone feature group: ${group}`)
+}
+
+const pageManifest: PageManifestEntry[] = [
+  ...featureEntries.map((entry) => ({
+    group: manifestGroup(entry.group),
+    path: entry.path,
+  })),
+  ...showcaseEntries.map((entry) => ({ group: manifestGroup(entry.group), path: entry.path })),
+]
+const pageCountByGroup = Object.fromEntries(
+  ['dashboard', 'demos', 'examples', 'profile', 'system'].map((group) => [
+    group,
+    pageManifest.filter((entry) => entry.group === group).length,
+  ]),
+)
 
 async function completeSliderCaptcha(page: Page) {
   const slider = page.getByLabel('滑动验证')
@@ -417,7 +452,7 @@ test('React 19 animation and rich-editor examples mount without compatibility cr
   await expect(page.locator('.app-tiptap-html')).toBeVisible()
 })
 
-test('requested Vben component parity stays intact', async ({ page }) => {
+test('requested component parity stays intact', async ({ page }) => {
   await loginAsSuper(page)
 
   await page.goto('/examples/form/query')

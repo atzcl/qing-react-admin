@@ -144,6 +144,7 @@ export default function DepartmentsPage() {
         columns={columns}
         dataSource={departments}
         defaultExpandAllRows
+        preferenceKey="system-department"
         headerTitle="部门列表"
         loading={departmentsQuery.isFetching || departmentMutation.isPending}
         onRefresh={async () => {

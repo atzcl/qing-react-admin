@@ -73,18 +73,18 @@ function DragSlider({
 
   return (
     <div
-      className={`vben-slider-captcha${rounded ? ' is-rounded' : ''}${tinted ? ' is-tinted' : ''} is-${status}`}
+      className={`example-slider-captcha${rounded ? ' is-rounded' : ''}${tinted ? ' is-tinted' : ''} is-${status}`}
       ref={trackRef}
     >
-      <div className="vben-slider-captcha__bar" style={{ width: left + 20 }} />
-      <div className="vben-slider-captcha__content">
+      <div className="example-slider-captcha__bar" style={{ width: left + 20 }} />
+      <div className="example-slider-captcha__content">
         {status === 'success' ? <CheckCircleFilled /> : null}
         {status === 'fail' ? <CloseCircleFilled /> : null}
         {content}
       </div>
       <button
         aria-label="拖动滑块"
-        className="vben-slider-captcha__action"
+        className="example-slider-captcha__action"
         onPointerDown={(event) => {
           if (status === 'success') return
           event.currentTarget.setPointerCapture(event.pointerId)
@@ -137,7 +137,7 @@ function SliderCaptcha({
 
 export function SliderCaptchaExample() {
   return (
-    <PageContainer description="完整迁移 Vben 的拖动校验状态、插槽与样式配置" title="滑块校验">
+    <PageContainer description="覆盖拖动校验状态、插槽与样式配置" title="滑块校验">
       <Card className="app-demo-card" title="基础示例">
         <SliderCaptcha />
       </Card>

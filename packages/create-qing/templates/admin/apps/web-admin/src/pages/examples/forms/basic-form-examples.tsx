@@ -25,12 +25,14 @@ import type { FormInstance, UploadFile, UploadProps } from 'antd'
 import dayjs from 'dayjs'
 import type { Dayjs } from 'dayjs'
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { z } from 'zod'
 
 import { PageContainer } from '~/components/page-container'
 import { QueryForm } from '~/components/query-form'
 import { initialEditorContent, RichEditor } from '~/components/rich-editor'
 import { VCropper } from '~/components/v-cropper'
 import type { VCropperRef } from '~/components/v-cropper'
+import { queryFormDayjsSchema } from '~/core/query-form-search'
 
 const { RangePicker } = DatePicker
 
@@ -507,6 +509,15 @@ function CompactQueryForm({
   namespace: string
 }) {
   const { message } = App.useApp()
+  const querySchema = z
+    .object({
+      datePicker: queryFormDayjsSchema.optional(),
+      number: z.number().optional(),
+      options: z.string().optional(),
+      password: z.string().optional(),
+      username: z.string().optional(),
+    })
+    .catchall(z.string())
   return (
     <QueryForm<Record<string, unknown>>
       items={Array.from({ length: fieldCount }, (_, index) => {
@@ -548,7 +559,7 @@ function CompactQueryForm({
         }
       })}
       onQuery={(values) => void message.info(`form values: ${JSON.stringify(values)}`)}
-      urlSync={{ namespace }}
+      urlSync={{ namespace, schema: querySchema }}
     />
   )
 }

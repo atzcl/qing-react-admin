@@ -1,5 +1,6 @@
 import { DeleteOutlined, EditOutlined, EyeOutlined, PlusOutlined } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useRouter, useRouterState } from '@tanstack/react-router'
 /* oxlint-disable react/no-unstable-nested-components -- QueryForm render entries are field render callbacks, not component definitions. */
 import {
   App,
@@ -17,11 +18,17 @@ import {
 import type { TableProps } from 'antd'
 import type { Dayjs } from 'dayjs'
 import { useEffect, useState } from 'react'
+import { z } from 'zod'
 
 import { ButtonList } from '~/components/button-list'
 import { PageContainer } from '~/components/page-container'
 import { ProTable } from '~/components/pro-table'
 import { QueryForm } from '~/components/query-form'
+import {
+  queryFormDayjsSchema,
+  readQueryFormSearch,
+  writeQueryFormSearch,
+} from '~/core/query-form-search'
 
 import {
   departmentTreeData,
@@ -40,26 +47,39 @@ interface UserQueryValues {
   userId?: string
 }
 
+const userQuerySchema = z.object({
+  createTime: z.tuple([queryFormDayjsSchema, queryFormDayjsSchema]).optional(),
+  name: z.string().optional(),
+  remark: z.string().optional(),
+  status: z.union([z.literal(0), z.literal(1)]).optional(),
+  userId: z.string().optional(),
+})
+const departmentFilterNamespace = 'system-user-department'
+const departmentFilterSchema = z.object({
+  id: z.string().optional(),
+  input: z.string().optional(),
+})
+
 type UserMutationAction =
   | { type: 'create'; values: UserFormValues }
   | { id: string; type: 'delete' }
   | { id: string; type: 'update'; values: Partial<UserFormValues> }
 
-/** 页面隐藏期间 Activity 会断开副作用；查询草稿独立保存，重新激活时不被表单初始化覆盖。 */
-const retainedUserPageState: {
-  departmentId: string
-  departmentSearchInput: string
-  query: UserQueryValues
-  queryValues: UserQueryValues
-} = {
-  departmentId: '',
-  departmentSearchInput: '',
-  query: {},
-  queryValues: {},
-}
-
 export default function UsersPage() {
   const { message, modal } = App.useApp()
+  const router = useRouter()
+  const location = useRouterState({
+    select: (state) => ({
+      hash: state.location.hash,
+      pathname: state.location.pathname,
+      search: state.location.searchStr,
+    }),
+  })
+  const initialDepartmentFilter = readQueryFormSearch(
+    location.search,
+    departmentFilterNamespace,
+    departmentFilterSchema,
+  )
   const queryClient = useQueryClient()
   const usersQuery = useQuery({ queryFn: systemApi.listUsers, queryKey: systemQueryKeys.users })
   const departmentsQuery = useQuery({
@@ -77,19 +97,28 @@ export default function UsersPage() {
     },
   })
   const users = usersQuery.data ?? []
-  const [query, setQuery] = useState<UserQueryValues>(() => retainedUserPageState.query)
-  const [queryValues, setQueryValues] = useState<UserQueryValues>(
-    () => retainedUserPageState.queryValues,
-  )
-  const [departmentSearchInput, setDepartmentSearchInput] = useState(
-    () => retainedUserPageState.departmentSearchInput,
+  const [query, setQuery] = useState<UserQueryValues>({})
+  const [queryValues, setQueryValues] = useState<UserQueryValues>({})
+  const [departmentSearchDraft, setDepartmentSearchDraft] = useState(
+    initialDepartmentFilter?.input ?? '',
   )
   const [departmentSearch, setDepartmentSearch] = useState('')
-  const [departmentId, setDepartmentId] = useState(() => retainedUserPageState.departmentId)
+  const [departmentIdDraft, setDepartmentIdDraft] = useState(initialDepartmentFilter?.id ?? '')
   const [editing, setEditing] = useState<UserRecord>()
   const [formOpen, setFormOpen] = useState(false)
   const [detail, setDetail] = useState<UserRecord>()
   const [form] = Form.useForm<UserFormValues>()
+  const currentDepartmentFilter = readQueryFormSearch(
+    location.search,
+    departmentFilterNamespace,
+    departmentFilterSchema,
+  )
+  const departmentSearchInput =
+    location.pathname === '/system/user'
+      ? (currentDepartmentFilter?.input ?? '')
+      : departmentSearchDraft
+  const departmentId =
+    location.pathname === '/system/user' ? (currentDepartmentFilter?.id ?? '') : departmentIdDraft
   const departmentNodes = departmentsQuery.data ?? []
   const departments = flattenDepartments(departmentNodes)
 
@@ -97,6 +126,19 @@ export default function UsersPage() {
     const timer = window.setTimeout(() => setDepartmentSearch(departmentSearchInput.trim()), 300)
     return () => window.clearTimeout(timer)
   }, [departmentSearchInput])
+
+  function updateDepartmentFilter(input: string, id: string) {
+    setDepartmentSearchDraft(input)
+    setDepartmentIdDraft(id)
+    const nextSearch = writeQueryFormSearch(location.search, departmentFilterNamespace, {
+      id,
+      input,
+    })
+    void router.navigate({
+      href: `${location.pathname}${nextSearch}${location.hash}`,
+      replace: true,
+    })
+  }
 
   const filteredUsers = users.filter((user) => {
     const inRange =
@@ -241,8 +283,6 @@ export default function UsersPage() {
   )
 
   function updateQuery(nextQuery: UserQueryValues) {
-    retainedUserPageState.query = nextQuery
-    retainedUserPageState.queryValues = nextQuery
     setQuery(nextQuery)
     setQueryValues(nextQuery)
   }
@@ -254,10 +294,7 @@ export default function UsersPage() {
           <Form.Item label="部门名称">
             <Input
               allowClear
-              onChange={(event) => {
-                retainedUserPageState.departmentSearchInput = event.target.value
-                setDepartmentSearchInput(event.target.value)
-              }}
+              onChange={(event) => updateDepartmentFilter(event.target.value, departmentId)}
               placeholder="请输入部门名称"
               value={departmentSearchInput}
             />
@@ -269,8 +306,7 @@ export default function UsersPage() {
           key={departmentSearch || 'all-departments'}
           onSelect={(keys) => {
             const nextDepartmentId = String(keys[0] ?? '')
-            retainedUserPageState.departmentId = nextDepartmentId
-            setDepartmentId(nextDepartmentId)
+            updateDepartmentFilter(departmentSearchInput, nextDepartmentId)
           }}
           selectedKeys={departmentId ? [departmentId] : []}
           treeData={filteredDepartmentTree}
@@ -304,11 +340,8 @@ export default function UsersPage() {
             ]}
             onQuery={updateQuery}
             onReset={updateQuery}
-            onValuesChange={(_, allValues) => {
-              retainedUserPageState.queryValues = allValues
-              setQueryValues(allValues)
-            }}
-            urlSync={{ namespace: 'system-user' }}
+            onValuesChange={(_, allValues) => setQueryValues(allValues)}
+            urlSync={{ namespace: 'system-user', schema: userQuerySchema }}
             values={queryValues}
           />
         </Card>
@@ -318,6 +351,7 @@ export default function UsersPage() {
           dataSource={filteredUsers}
           headerTitle="用户列表"
           loading={usersQuery.isFetching || userMutation.isPending}
+          preferenceKey="system-user"
           onRefresh={async () => {
             await usersQuery.refetch()
             await message.success('用户列表已刷新')

@@ -17,6 +17,7 @@ const tabsSchema = z.array(
   z.object({
     affix: z.boolean().optional(),
     definitionPath: z.string().startsWith('/').optional(),
+    href: z.string().startsWith('/').optional(),
     params: z.record(z.string(), z.string()).optional(),
     path: z.string().startsWith('/'),
     revision: z.number().int().nonnegative().optional(),
@@ -30,6 +31,7 @@ const storedPreferencesSchema = z.record(z.string(), z.unknown())
 const homeTab: AppTab = {
   affix: true,
   definitionPath: '/dashboard/analytics',
+  href: '/dashboard/analytics',
   params: {},
   path: '/dashboard/analytics',
   revision: 0,
@@ -45,6 +47,7 @@ function restoreTabs(preferences: AppPreferences) {
     tabs.push({
       ...(tab.affix === undefined ? {} : { affix: tab.affix }),
       definitionPath: tab.definitionPath ?? tab.path,
+      href: tab.href ?? tab.path,
       params: tab.params ?? {},
       path: tab.path,
       ...(tab.revision === undefined ? {} : { revision: tab.revision }),
@@ -122,6 +125,7 @@ export function resetPreferences(store: Store<AppState>) {
 export function visitTab(
   store: Store<AppState>,
   path: string,
+  href: string,
   definitionPath: string,
   params: Record<string, string>,
   titleKey: TranslationKey,
@@ -135,6 +139,7 @@ export function visitTab(
         existingParamKeys.every((key) => existingTab.params[key] === params[key])
       if (
         existingTab.definitionPath === definitionPath &&
+        existingTab.href === href &&
         existingTab.titleKey === titleKey &&
         paramsMatch
       ) {
@@ -143,14 +148,14 @@ export function visitTab(
       return {
         ...state,
         tabs: state.tabs.map((tab) =>
-          tab.path === path ? { ...tab, definitionPath, params, titleKey } : tab,
+          tab.path === path ? { ...tab, definitionPath, href, params, titleKey } : tab,
         ),
       }
     }
     return {
       ...state,
       tabs: constrainTabs(
-        [...state.tabs, { definitionPath, params, path, revision: 0, titleKey }],
+        [...state.tabs, { definitionPath, href, params, path, revision: 0, titleKey }],
         state.preferences.tabMaxCount,
       ),
     }

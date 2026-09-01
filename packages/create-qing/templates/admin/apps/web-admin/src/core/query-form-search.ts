@@ -1,5 +1,7 @@
 import dayjs from 'dayjs'
+import type { Dayjs } from 'dayjs'
 import { z } from 'zod'
+import type { ZodType } from 'zod'
 
 const dayjsType = 'dayjs'
 const queryFormParameter = 'qf'
@@ -14,12 +16,20 @@ type EncodedQueryValue =
   | { [key: string]: EncodedQueryValue }
 
 type QueryFormSearchState = Record<string, Record<string, unknown>>
+export type QueryFormUrlSchema<Values extends object> = ZodType<{
+  [Property in keyof Values]?: Values[Property] | undefined
+}>
 
 export const queryFormSearchSchema = z
   .object({ qf: z.string().max(20_000).optional() })
   .catchall(z.unknown())
 
 const queryFormStateSchema = z.record(z.string(), z.record(z.string(), z.unknown()))
+
+/** URL 解码后的日期必须仍是合法 Dayjs，业务页面不再信任通用 JSON 形状。 */
+export const queryFormDayjsSchema = z.custom<Dayjs>(
+  (value) => dayjs.isDayjs(value) && value.isValid(),
+)
 
 function encodeValue(value: unknown): EncodedQueryValue | undefined {
   if (value === undefined) return undefined
@@ -70,11 +80,20 @@ function readParameter(search: string) {
   return new URLSearchParams(search).get(queryFormParameter)
 }
 
-export function readQueryFormSearch<Values extends object>(search: string, namespace: string) {
+export function readQueryFormSearch<Values extends object>(
+  search: string,
+  namespace: string,
+  schema: QueryFormUrlSchema<Values>,
+) {
   const encodedValues = parseState(readParameter(search))[namespace]
   if (!encodedValues) return undefined
-  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- The route schema and recursive decoder validate the URL boundary; the page supplies the concrete form shape.
-  return decodeValue(encodedValues) as Partial<Values>
+  const result = schema.safeParse(decodeValue(encodedValues))
+  if (!result.success) return undefined
+  const values = Object.fromEntries(
+    Object.entries(result.data).filter((entry) => entry[1] !== undefined),
+  )
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Undefined optional properties are removed so the exact-optional form contract is preserved after schema validation.
+  return values as Partial<Values>
 }
 
 export function queryFormSearchSignature(search: string, namespace: string) {

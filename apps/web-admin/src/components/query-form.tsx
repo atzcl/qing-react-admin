@@ -21,6 +21,7 @@ import {
   readQueryFormSearch,
   writeQueryFormSearch,
 } from '~/core/query-form-search'
+import type { QueryFormUrlSchema } from '~/core/query-form-search'
 
 import { ButtonList } from './button-list'
 
@@ -93,9 +94,6 @@ const defaultLocale: QueryFormLocale = {
 }
 
 const QueryFormLocaleContext = createContext<QueryFormLocale>(defaultLocale)
-/** Activity 重连或懒加载重挂载时，保留当前会话中各页面最后一次已提交的 URL 查询。 */
-const runtimeQueryFormValues = new Map<string, object>()
-
 export interface QueryFormProps<Values extends QueryFormValues> extends Omit<
   FormProps<Values>,
   | 'children'
@@ -127,7 +125,7 @@ export interface QueryFormProps<Values extends QueryFormValues> extends Omit<
   size?: ButtonProps['size']
   validate?: boolean
   values?: Partial<Values>
-  urlSync?: boolean | { namespace?: string; replace?: boolean }
+  urlSync?: { namespace?: string; replace?: boolean; schema: QueryFormUrlSchema<Values> }
 }
 
 export function QueryFormLocaleProvider({
@@ -147,7 +145,7 @@ export function QueryForm<Values extends QueryFormValues>({
   ...props
 }: QueryFormProps<Values>): ReactElement {
   return urlSync ? (
-    <UrlSyncedQueryForm {...props} options={typeof urlSync === 'boolean' ? {} : urlSync} />
+    <UrlSyncedQueryForm {...props} options={urlSync} />
   ) : (
     <QueryFormContent {...props} />
   )
@@ -157,7 +155,7 @@ interface UrlSyncedQueryFormProps<Values extends QueryFormValues> extends Omit<
   QueryFormProps<Values>,
   'urlSync'
 > {
-  options: { namespace?: string; replace?: boolean }
+  options: { namespace?: string; replace?: boolean; schema: QueryFormUrlSchema<Values> }
 }
 
 function resolveQueryFormValues<Values extends QueryFormValues>(values: Partial<Values>): Values {
@@ -181,16 +179,14 @@ function UrlSyncedQueryForm<Values extends QueryFormValues>({
   const namespace = options.namespace ?? 'default'
   const replace = options.replace ?? true
   const active = adminPage.pathname === location.pathname
-  const runtimeKey = `${adminPage.pathname}:${namespace}`
   const urlValues = useMemo(
-    () => readQueryFormSearch<Values>(location.search, namespace),
-    [location.search, namespace],
+    () => readQueryFormSearch<Values>(location.search, namespace, options.schema),
+    [location.search, namespace, options.schema],
   )
-  const runtimeValues = runtimeQueryFormValues.get(runtimeKey) as Partial<Values> | undefined
   const searchSignature = queryFormSearchSignature(location.search, namespace)
   const defaultValues = useMemo(() => createQueryFormDefaultValues(props.items), [props.items])
   const resetValues = props.resetValues ?? defaultValues
-  const resolvedValues = urlValues ?? runtimeValues ?? props.values ?? resetValues
+  const resolvedValues = urlValues ?? props.values ?? resetValues
   const wasActiveRef = useRef(false)
   const previousSignatureRef = useRef<string | null>(null)
   const pendingSignatureRef = useRef<{ active: boolean; value: string | null }>({
@@ -239,35 +235,26 @@ function UrlSyncedQueryForm<Values extends QueryFormValues>({
     }
     if (!wasActive) {
       if (urlValues) {
-        runtimeQueryFormValues.set(runtimeKey, urlValues)
         void onQueryRef.current(resolveQueryFormValues(urlValues))
-      } else if (runtimeValues) {
-        const nextRuntimeValues = resolveQueryFormValues(runtimeValues)
-        void updateUrl(nextRuntimeValues)
-        void onQueryRef.current(nextRuntimeValues)
       }
       return
     }
     if (previousSignature === searchSignature) return
     if (urlValues) {
-      runtimeQueryFormValues.set(runtimeKey, urlValues)
       void onQueryRef.current(resolveQueryFormValues(urlValues))
       return
     }
-    runtimeQueryFormValues.delete(runtimeKey)
     const nextResetValues = resolveQueryFormValues(resetValues)
     if (onResetRef.current) void onResetRef.current(nextResetValues)
     else void onQueryRef.current(nextResetValues)
-  }, [active, resetValues, runtimeKey, runtimeValues, searchSignature, updateUrl, urlValues])
+  }, [active, resetValues, searchSignature, urlValues])
 
   async function handleQuery(values: Values) {
-    runtimeQueryFormValues.set(runtimeKey, values)
     await updateUrl(values)
     await props.onQuery(values)
   }
 
   async function handleReset(values: Values) {
-    runtimeQueryFormValues.delete(runtimeKey)
     await updateUrl()
     if (props.onReset) await props.onReset(values)
     else await props.onQuery(values)

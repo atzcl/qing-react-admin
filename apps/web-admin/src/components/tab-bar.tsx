@@ -59,7 +59,7 @@ export function TabBar({ onNavigate, pathname }: TabBarProps) {
 
   function remove(path: string) {
     const result = executeTabCommand(appStore, pathname, { path, type: 'close' })
-    if (result.nextPath) onNavigate(result.nextPath)
+    if (result.nextHref) onNavigate(result.nextHref)
   }
 
   function titleFor(tab: AppTab) {
@@ -76,10 +76,10 @@ export function TabBar({ onNavigate, pathname }: TabBarProps) {
         pathname,
         command.type === 'close-all' ? command : { ...command, path: tab.path },
       )
-      if (result.nextPath) onNavigate(result.nextPath)
+      if (result.nextHref) onNavigate(result.nextHref)
       return
     }
-    if (key === 'open') window.open(tab.path, '_blank', 'noopener,noreferrer')
+    if (key === 'open') window.open(tab.href, '_blank', 'noopener,noreferrer')
     if (key === 'maximize') setMaximized((value) => !value)
   }
 
@@ -234,7 +234,7 @@ export function TabBar({ onNavigate, pathname }: TabBarProps) {
       hideAdd
       items={items}
       more={{ trigger: 'click' }}
-      onChange={onNavigate}
+      onChange={(path) => onNavigate(tabs.find((tab) => tab.path === path)?.href ?? path)}
       onEdit={(targetKey, action) => {
         if (action === 'remove' && typeof targetKey === 'string') remove(targetKey)
       }}

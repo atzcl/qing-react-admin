@@ -7,12 +7,16 @@ import { getAdminPage } from '~/core/page-registry'
 
 interface ActivityPageHostProps {
   definitionPath: string
+  href: string
   params: Record<string, string>
   pathname: string
 }
 
-interface ActivityPageSlotProps extends ActivityPageHostProps {
+interface ActivityPageSlotProps {
   children: ReactNode
+  definitionPath: string
+  params: Record<string, string>
+  pathname: string
   revision: number
 }
 
@@ -32,7 +36,12 @@ function ActivityPageSlot({
   )
 }
 
-export function ActivityPageHost({ definitionPath, params, pathname }: ActivityPageHostProps) {
+export function ActivityPageHost({
+  definitionPath,
+  href,
+  params,
+  pathname,
+}: ActivityPageHostProps) {
   'use no memo'
 
   const appStore = useAppStore()
@@ -40,8 +49,9 @@ export function ActivityPageHost({ definitionPath, params, pathname }: ActivityP
   const currentPage = getAdminPage(definitionPath)
 
   useEffect(() => {
-    if (currentPage) visitTab(appStore, pathname, definitionPath, params, currentPage.titleKey)
-  }, [appStore, currentPage, definitionPath, params, pathname])
+    if (currentPage)
+      visitTab(appStore, pathname, href, definitionPath, params, currentPage.titleKey)
+  }, [appStore, currentPage, definitionPath, href, params, pathname])
 
   if (!currentPage) return null
 
@@ -49,7 +59,14 @@ export function ActivityPageHost({ definitionPath, params, pathname }: ActivityP
     ? tabs
     : [
         ...tabs,
-        { definitionPath, params, path: pathname, revision: 0, titleKey: currentPage.titleKey },
+        {
+          definitionPath,
+          href,
+          params,
+          path: pathname,
+          revision: 0,
+          titleKey: currentPage.titleKey,
+        },
       ]
 
   return (

@@ -23,7 +23,7 @@
     "template:sync": "node scripts/sync-template.mjs",
     "test": "pnpm -r --if-present run test",
     "test:e2e": "playwright test",
-    "test:coverage": "pnpm --filter @qing-react-admin/web-admin test:coverage",
+    "test:coverage": "pnpm -r --if-present run test:coverage",
     "test:watch": "vitest",
     "typecheck": "pnpm -r --if-present run typecheck",
     "typecheck:compat": "pnpm -r --if-present run typecheck:compat",

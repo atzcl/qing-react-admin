@@ -128,10 +128,15 @@ export function AdminShell({ user }: AdminShellProps) {
           break
         }
       }
-      return { pathname: state.location.pathname, routePage, status: state.status }
+      return {
+        currentHref: state.location.href,
+        pathname: state.location.pathname,
+        routePage,
+        status: state.status,
+      }
     },
   })
-  const { pathname, routePage, status: routerStatus } = routeState
+  const { currentHref, pathname, routePage, status: routerStatus } = routeState
   const router = useRouter()
   const t = useTranslation()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -231,7 +236,8 @@ export function AdminShell({ user }: AdminShellProps) {
       window.open(page.externalUrl, '_blank', 'noopener,noreferrer')
       return
     }
-    const href = page?.menuHref ?? path
+    const retainedHref = appStore.state.tabs.find((tab) => tab.path === path)?.href
+    const href = page?.menuHref ?? retainedHref ?? path
     if (page?.openInNewWindow) {
       window.open(href, '_blank', 'noopener,noreferrer')
       return
@@ -614,6 +620,7 @@ export function AdminShell({ user }: AdminShellProps) {
               {routePage ? (
                 <ActivityPageHost
                   definitionPath={routePage.definitionPath}
+                  href={currentHref}
                   params={routePage.params}
                   pathname={pathname}
                 />
@@ -622,6 +629,7 @@ export function AdminShell({ user }: AdminShellProps) {
           ) : routePage ? (
             <ActivityPageHost
               definitionPath={routePage.definitionPath}
+              href={currentHref}
               params={routePage.params}
               pathname={pathname}
             />

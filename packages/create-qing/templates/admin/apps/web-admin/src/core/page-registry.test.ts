@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest'
 
-import { pageCountByGroup, pageManifest } from './page-manifest'
 import {
   adminPages,
   canAccessPage,
@@ -11,10 +10,15 @@ import {
   getAdminPage,
   navigationGroups,
   systemPages,
+  type NavigationNode,
   utilityPages,
 } from './page-registry'
 import { localizedPagePaths } from './route-labels'
 import { showcaseStats } from './showcase-catalog'
+
+function collectMenuPaths(nodes: NavigationNode[]): string[] {
+  return nodes.flatMap((node) => ('path' in node ? [node.path] : collectMenuPaths(node.children)))
+}
 
 describe('page registry', () => {
   it('keeps every navigation page in the Activity registry', () => {
@@ -22,6 +26,18 @@ describe('page registry', () => {
       (group) => group.pages?.map((page) => page.path) ?? [],
     )
     expect(visiblePaths.every((path) => adminPages.some((page) => page.path === path))).toBe(true)
+  })
+
+  it('keeps every visible showcase page in its catalog-derived menu tree', () => {
+    for (const groupKey of ['demos', 'examples']) {
+      const group = navigationGroups.find((item) => item.key === groupKey)
+      const expected = group?.pages?.filter((page) => !page.hideInMenu).map((page) => page.path)
+      const menuPaths = new Set(collectMenuPaths(group?.menu ?? []))
+      expect(expected?.every((path) => menuPaths.has(path))).toBe(true)
+      expect([...menuPaths].every((path) => group?.pages?.some((page) => page.path === path))).toBe(
+        true,
+      )
+    }
   })
 
   it('exposes the four application menu groups and all built-in features', () => {
@@ -59,22 +75,6 @@ describe('page registry', () => {
     expect(new Set(adminPages.map((page) => page.path)).size).toBe(adminPages.length)
     expect(adminPages.some((page) => /about|project/.test(page.path))).toBe(false)
     expect(getAdminPage('/system/user')?.page).not.toBe(getAdminPage('/system/role')?.page)
-  })
-
-  it('maps every manifest entry to one reachable React page', () => {
-    const manifestCounts = Object.fromEntries(
-      Object.keys(pageCountByGroup).map((group) => [
-        group,
-        pageManifest.filter((entry) => entry.group === group).length,
-      ]),
-    )
-
-    expect(pageCountByGroup).toEqual(manifestCounts)
-    expect(pageManifest).toHaveLength(
-      Object.values(pageCountByGroup).reduce((total, count) => total + count, 0),
-    )
-    expect(new Set(pageManifest.map((entry) => entry.path)).size).toBe(pageManifest.length)
-    expect(pageManifest.every((entry) => getAdminPage(entry.path))).toBe(true)
   })
 
   it('uses localized titles for every demo and example route', () => {

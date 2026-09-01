@@ -1,6 +1,9 @@
-import { mkdtemp, readFile, rm } from 'node:fs/promises'
+import { execFile } from 'node:child_process'
+import { mkdtemp, readFile, rm, symlink } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
-import { join, resolve } from 'node:path'
+import { dirname, join, resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
+import { promisify } from 'node:util'
 
 import { afterEach, describe, expect, it } from 'vitest'
 
@@ -8,6 +11,20 @@ import { generatePage } from '../src/generator.mjs'
 import { createProject } from '../src/scaffold.mjs'
 
 const temporaryRoots = []
+const execFileAsync = promisify(execFile)
+const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../../..')
+
+async function run(command, arguments_, options) {
+  try {
+    return await execFileAsync(command, arguments_, options)
+  } catch (error) {
+    const stdout = typeof error?.stdout === 'string' ? error.stdout : ''
+    const stderr = typeof error?.stderr === 'string' ? error.stderr : ''
+    throw new Error(`${command} ${arguments_.join(' ')} failed\n${stdout}${stderr}`, {
+      cause: error,
+    })
+  }
+}
 
 afterEach(async () => {
   await Promise.all(
@@ -69,9 +86,7 @@ describe('project scaffold', () => {
     expect(rootPackage).toContain('"name": "acme-admin"')
     expect(rootPackage).toContain('"zod": "catalog:"')
     expect(rootPackage).toContain('"test:e2e": "playwright test"')
-    expect(rootPackage).toContain(
-      '"test:coverage": "pnpm --filter @acme-admin/web-admin test:coverage"',
-    )
+    expect(rootPackage).toContain('"test:coverage": "pnpm -r --if-present run test:coverage"')
     expect(appPackage).toContain('"name": "@acme-admin/web-admin"')
     expect(appPackage).not.toContain('@tippyjs/react')
     expect(appPackage).not.toContain('echarts-for-react')
@@ -99,7 +114,7 @@ describe('project scaffold', () => {
     expect(avatar).toContain('<svg')
   })
 
-  it('generates one self-registering feature slice and its protected route', async () => {
+  it('generates and compiles one self-registering feature slice and its protected route', async () => {
     const target = await temporaryTarget()
     await createProject({ force: false, install: false, name: 'generator-fixture', target })
     const registryPath = resolve(target, 'apps/web-admin/src/core/page-registry.tsx')
@@ -144,11 +159,30 @@ describe('project scaffold', () => {
     expect(feature).toContain('\'zh-CN\': "订单审计"')
     expect(feature).toContain('\'zh-TW\': "訂單稽核"')
     expect(page).toContain('<PageContainer>')
-    expect(route).toContain('beforeLoadAdminPage("/business/order-audit", context.user)')
-    expect(route).toContain('staticData: { adminPagePath: "/business/order-audit" }')
+    expect(route).toContain("beforeLoadAdminPage('/business/order-audit', context.user)")
+    expect(route).toContain("staticData: { adminPagePath: '/business/order-audit' }")
     expect(registryAfter).toBe(registryBefore)
     expect(i18nAfter).toBe(i18nBefore)
-  })
+    await symlink(resolve(repositoryRoot, 'node_modules'), resolve(target, 'node_modules'))
+    await symlink(
+      resolve(repositoryRoot, 'apps/web-admin/node_modules'),
+      resolve(target, 'apps/web-admin/node_modules'),
+    )
+    await run('pnpm', ['routes:check'], { cwd: target })
+    await run(resolve(repositoryRoot, 'apps/web-admin/node_modules/.bin/vite'), ['build'], {
+      cwd: resolve(target, 'apps/web-admin'),
+    })
+    await run(
+      resolve(repositoryRoot, 'node_modules/.bin/tsc'),
+      ['--noEmit', '--project', resolve(target, 'apps/web-admin/tsconfig.json')],
+      { cwd: target },
+    )
+    await run(
+      'node',
+      [resolve(target, 'scripts/assert-csr-build.mjs'), resolve(target, 'apps/web-admin/dist')],
+      { cwd: target },
+    )
+  }, 30_000)
 
   it('supports the examples group and super role', async () => {
     const target = await temporaryTarget()
@@ -174,6 +208,6 @@ describe('project scaffold', () => {
     )
     expect(feature).toContain('group: "examples"')
     expect(feature).toContain('roles: ["super"]')
-    expect(route).toContain('beforeLoadAdminPage("/examples/schema-lab", context.user)')
+    expect(route).toContain("beforeLoadAdminPage('/examples/schema-lab', context.user)")
   })
 })

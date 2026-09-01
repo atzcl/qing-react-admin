@@ -13,27 +13,45 @@ import type { ColumnGroupType, ColumnsType, ColumnType } from 'antd/es/table/int
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import type { Key, MouseEvent, ReactElement, ReactNode } from 'react'
 
+import {
+  createDefaultColumnPreferences,
+  moveColumnPreference,
+  normalizeColumnPreferences,
+  readColumnPreferences,
+  readDensity,
+  updateAllColumnPreferenceVisibility,
+  updateColumnPreferenceFixedSide,
+  updateColumnPreferenceVisibility,
+  writeColumnPreferences,
+  writeDensity,
+} from '~/core/table-preferences'
+import type { StandardTableColumnPreferences, StandardTableDensity } from '~/core/table-preferences'
+
 import { ButtonList } from './button-list'
 import type { ButtonListItem } from './button-list'
 
 const columnVisibilityStoragePrefix = 'qing.standard-table.columns'
-const densityStorageKey = 'qing.standard-table.density'
+const densityStorageKey = 'qing.standard-table.density:v2'
 const actionColumnIds = new Set(['action', 'actions', 'operation', 'operations'])
 const defaultActionColumnWidth = 168
 const maxActionColumnWidth = 220
 const rowSelectionColumnWidth = 36
 
-export type StandardTableDensity = 'large' | 'middle' | 'small'
-export type StandardTableColumnFixedSide = 'left' | 'right'
-
-export interface StandardTableColumnPreferences {
-  fixedColumnIds: Readonly<Record<string, StandardTableColumnFixedSide>>
-  orderedColumnIds: readonly string[]
-  visibleColumnIds: ReadonlySet<string>
-}
+export type {
+  StandardTableColumnFixedSide,
+  StandardTableColumnPreferences,
+  StandardTableDensity,
+} from '~/core/table-preferences'
+export {
+  createDefaultColumnPreferences,
+  moveColumnPreference,
+  normalizeColumnPreferences,
+  updateAllColumnPreferenceVisibility,
+  updateColumnPreferenceFixedSide,
+  updateColumnPreferenceVisibility,
+} from '~/core/table-preferences'
 
 interface ColumnVisibilityOptions {
-  storageKey?: string
   triggerAriaLabel?: string
 }
 
@@ -117,6 +135,7 @@ export interface ProTableProps<RecordType extends object> extends Omit<
   emptyText?: ReactNode
   headerTitle?: ReactNode
   onRefresh?: () => unknown
+  preferenceKey?: string
   refreshLoading?: boolean
   size?: StandardTableDensity
   stableRowKey: string | keyof RecordType | ((record: RecordType) => Key)
@@ -142,6 +161,7 @@ export function ProTable<RecordType extends object>({
   onRefresh,
   onRow,
   pagination,
+  preferenceKey,
   refreshLoading = false,
   rowSelection,
   size,
@@ -157,15 +177,15 @@ export function ProTable<RecordType extends object>({
     [normalizedColumns],
   )
   const columnIds = useMemo(() => visibilityItems.map((item) => item.id), [visibilityItems])
-  const columnIdsSignature = columnIds.join('|')
   const columnOptions = typeof columnVisibility === 'object' ? columnVisibility : undefined
   const densityOptions = typeof density === 'object' ? density : undefined
   const densityEnabled = density !== false
   const visibilityEnabled =
     columnVisibility !== false && normalizedColumns.length > 0 && visibilityItems.length > 1
   const resolvedDensityStorageKey = densityOptions?.storageKey ?? densityStorageKey
-  const resolvedColumnStorageKey =
-    columnOptions?.storageKey ?? `${columnVisibilityStoragePrefix}.${hashText(columnIdsSignature)}`
+  const resolvedColumnStorageKey = preferenceKey
+    ? `${columnVisibilityStoragePrefix}.${preferenceKey}`
+    : undefined
   const [tableDensity, setTableDensity] = useState<StandardTableDensity>(() =>
     readDensity(resolvedDensityStorageKey, densityOptions?.defaultValue ?? size ?? 'small'),
   )
@@ -577,104 +597,6 @@ export function createColumnVisibilityItems<T extends object>(
   })
 }
 
-export function createDefaultColumnPreferences(
-  allColumnIds: readonly string[],
-): StandardTableColumnPreferences {
-  return {
-    fixedColumnIds: {},
-    orderedColumnIds: [...allColumnIds],
-    visibleColumnIds: new Set(allColumnIds),
-  }
-}
-
-export function normalizeColumnPreferences(
-  input: unknown,
-  allColumnIds: readonly string[],
-): StandardTableColumnPreferences {
-  if (Array.isArray(input))
-    return normalizeColumnPreferences({ visibleColumnIds: input }, allColumnIds)
-  if (!isRecord(input)) return createDefaultColumnPreferences(allColumnIds)
-  const allIds = new Set(allColumnIds)
-  const ordered = normalizeStringList(input.orderedColumnIds).filter((id) => allIds.has(id))
-  const orderedSet = new Set(ordered)
-  const visible = normalizeStringList(input.visibleColumnIds).filter((id) => allIds.has(id))
-  const fixed = Object.fromEntries(
-    Object.entries(isRecord(input.fixedColumnIds) ? input.fixedColumnIds : {}).filter(
-      (entry): entry is [string, StandardTableColumnFixedSide] =>
-        allIds.has(entry[0]) && (entry[1] === 'left' || entry[1] === 'right'),
-    ),
-  )
-  return {
-    fixedColumnIds: fixed,
-    orderedColumnIds: [...ordered, ...allColumnIds.filter((id) => !orderedSet.has(id))],
-    visibleColumnIds: new Set(visible.length > 0 ? visible : allColumnIds),
-  }
-}
-
-export function updateColumnPreferenceVisibility(
-  current: StandardTableColumnPreferences,
-  columnId: string,
-  visible: boolean,
-  allColumnIds: readonly string[],
-): StandardTableColumnPreferences {
-  const normalized = normalizeColumnPreferences(current, allColumnIds)
-  const next = new Set(normalized.visibleColumnIds)
-  if (visible) next.add(columnId)
-  else if (next.size > 1) next.delete(columnId)
-  return { ...normalized, visibleColumnIds: next }
-}
-
-export function updateAllColumnPreferenceVisibility(
-  current: StandardTableColumnPreferences,
-  visible: boolean,
-  allColumnIds: readonly string[],
-): StandardTableColumnPreferences {
-  const normalized = normalizeColumnPreferences(current, allColumnIds)
-  const first = allColumnIds[0]
-  return {
-    ...normalized,
-    visibleColumnIds: new Set(visible ? allColumnIds : first ? [first] : []),
-  }
-}
-
-export function moveColumnPreference(
-  current: StandardTableColumnPreferences,
-  sourceColumnId: string,
-  targetColumnId: string,
-  allColumnIds: readonly string[],
-): StandardTableColumnPreferences {
-  const normalized = normalizeColumnPreferences(current, allColumnIds)
-  const order = [...normalized.orderedColumnIds]
-  const sourceIndex = order.indexOf(sourceColumnId)
-  const targetIndex = order.indexOf(targetColumnId)
-  if (sourceIndex < 0 || targetIndex < 0 || sourceIndex === targetIndex) return normalized
-  const [source] = order.splice(sourceIndex, 1)
-  if (source) order.splice(targetIndex, 0, source)
-  return { ...normalized, orderedColumnIds: order }
-}
-
-export function updateColumnPreferenceFixedSide(
-  current: StandardTableColumnPreferences,
-  columnId: string,
-  side: StandardTableColumnFixedSide,
-  allColumnIds: readonly string[],
-): StandardTableColumnPreferences {
-  const normalized = normalizeColumnPreferences(current, allColumnIds)
-  if (!allColumnIds.includes(columnId)) return normalized
-  const fixed = { ...normalized.fixedColumnIds }
-  if (fixed[columnId] === side) {
-    delete fixed[columnId]
-    return { ...normalized, fixedColumnIds: fixed }
-  }
-  fixed[columnId] = side
-  const rest = normalized.orderedColumnIds.filter((id) => id !== columnId)
-  return {
-    ...normalized,
-    fixedColumnIds: fixed,
-    orderedColumnIds: fixed[columnId] === 'left' ? [columnId, ...rest] : [...rest, columnId],
-  }
-}
-
 export function resolveNextSelectedRowKeys(
   selectedRowKeys: readonly Key[],
   rowKey: Key,
@@ -766,54 +688,6 @@ function isRowSelectionClickIgnored(target: EventTarget | null): boolean {
   )
 }
 
-function readColumnPreferences(
-  storageKey: string,
-  allColumnIds: readonly string[],
-): StandardTableColumnPreferences {
-  if (typeof window === 'undefined') return createDefaultColumnPreferences(allColumnIds)
-  try {
-    const value = window.localStorage.getItem(storageKey)
-    return normalizeColumnPreferences(value ? JSON.parse(value) : undefined, allColumnIds)
-  } catch {
-    return createDefaultColumnPreferences(allColumnIds)
-  }
-}
-
-function writeColumnPreferences(storageKey: string, preferences: StandardTableColumnPreferences) {
-  if (typeof window === 'undefined') return
-  try {
-    window.localStorage.setItem(
-      storageKey,
-      JSON.stringify({
-        fixedColumnIds: preferences.fixedColumnIds,
-        orderedColumnIds: preferences.orderedColumnIds,
-        visibleColumnIds: [...preferences.visibleColumnIds],
-      }),
-    )
-  } catch {
-    // Restricted browser modes can disable storage; rendering remains functional.
-  }
-}
-
-function readDensity(storageKey: string, fallback: StandardTableDensity): StandardTableDensity {
-  if (typeof window === 'undefined') return fallback
-  try {
-    const value = window.localStorage.getItem(storageKey)
-    return isDensity(value) ? value : fallback
-  } catch {
-    return fallback
-  }
-}
-
-function writeDensity(storageKey: string, density: StandardTableDensity) {
-  if (typeof window === 'undefined') return
-  try {
-    window.localStorage.setItem(storageKey, density)
-  } catch {
-    // Restricted browser modes can disable storage; rendering remains functional.
-  }
-}
-
 function isColumnGroup<T extends object>(
   column: ColumnGroupType<T> | ColumnType<T>,
 ): column is ColumnGroupType<T> {
@@ -844,23 +718,6 @@ function isActionColumn<T extends object>(column: ColumnType<T>, index: number):
   return actionColumnIds.has(resolveColumnId(column, index).toLowerCase())
 }
 
-function normalizeStringList(input: unknown): readonly string[] {
-  if (input instanceof Set)
-    return [...input].filter((item): item is string => typeof item === 'string')
-  if (Array.isArray(input)) return input.filter((item): item is string => typeof item === 'string')
-  return []
-}
-
-function isRecord(input: unknown): input is Record<string, unknown> {
-  return typeof input === 'object' && input !== null && !Array.isArray(input)
-}
-
 function isDensity(value: unknown): value is StandardTableDensity {
   return value === 'large' || value === 'middle' || value === 'small'
-}
-
-function hashText(input: string): string {
-  let hash = 0
-  for (const char of input) hash = (hash * 31 + char.charCodeAt(0)) >>> 0
-  return hash.toString(36)
 }

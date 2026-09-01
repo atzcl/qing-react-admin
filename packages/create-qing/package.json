@@ -17,6 +17,7 @@
   },
   "scripts": {
     "test": "vitest run tests --exclude 'templates/**'",
+    "test:coverage": "vitest run tests --exclude 'templates/**' --coverage",
     "typecheck": "tsc --allowJs --checkJs --noEmit --module NodeNext --moduleResolution NodeNext --target ES2023 --types node src/*.mjs bin/*.mjs"
   },
   "dependencies": {
@@ -24,6 +25,7 @@
   },
   "devDependencies": {
     "@types/node": "catalog:",
+    "@vitest/coverage-v8": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"
   },

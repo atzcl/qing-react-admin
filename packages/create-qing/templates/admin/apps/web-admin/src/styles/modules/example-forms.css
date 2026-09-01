@@ -207,7 +207,7 @@
   gap: 16px;
 }
 
-.vben-slider-captcha {
+.example-slider-captcha {
   position: relative;
   width: min(100%, 500px);
   height: 40px;
@@ -220,31 +220,31 @@
   user-select: none;
 }
 
-.vben-slider-captcha.is-rounded {
+.example-slider-captcha.is-rounded {
   border-radius: 999px;
 }
 
-.vben-slider-captcha.is-tinted {
+.example-slider-captcha.is-tinted {
   background: #e0f2fe;
 }
 
-.vben-slider-captcha.is-success {
+.example-slider-captcha.is-success {
   border-color: #22c55e;
   background: #dcfce7;
 }
 
-.vben-slider-captcha.is-fail {
+.example-slider-captcha.is-fail {
   border-color: var(--ant-color-error);
 }
 
-.vben-slider-captcha__bar {
+.example-slider-captcha__bar {
   position: absolute;
   inset: 0 auto 0 0;
   border-right: 1px solid color-mix(in srgb, var(--ant-color-primary) 42%, transparent);
   background: color-mix(in srgb, var(--ant-color-primary) 18%, transparent);
 }
 
-.vben-slider-captcha__action {
+.example-slider-captcha__action {
   position: absolute;
   z-index: 2;
   top: -1px;
@@ -261,12 +261,12 @@
   transition: box-shadow 160ms ease;
 }
 
-.vben-slider-captcha__action:active {
+.example-slider-captcha__action:active {
   cursor: grabbing;
   box-shadow: 0 2px 8px rgb(0 0 0 / 16%);
 }
 
-.vben-slider-captcha__content {
+.example-slider-captcha__content {
   position: absolute;
   z-index: 1;
   inset: 0;

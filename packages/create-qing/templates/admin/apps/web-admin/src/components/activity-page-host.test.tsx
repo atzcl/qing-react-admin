@@ -35,7 +35,12 @@ function Host({ pathname }: { pathname: string }) {
     <QueryClientProvider client={queryClient}>
       <App>
         <AppStoreProvider>
-          <ActivityPageHost definitionPath={pathname} params={{}} pathname={pathname} />
+          <ActivityPageHost
+            href={pathname}
+            definitionPath={pathname}
+            params={{}}
+            pathname={pathname}
+          />
         </AppStoreProvider>
       </App>
     </QueryClientProvider>

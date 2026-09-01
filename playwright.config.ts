@@ -14,7 +14,7 @@ export default defineConfig({
     viewport: { height: 900, width: 1440 },
   },
   webServer: {
-    command: 'pnpm --filter @qing-react-admin/web-admin dev --host 127.0.0.1 --port 5192',
+    command: 'apps/web-admin/node_modules/.bin/vite apps/web-admin --host 127.0.0.1 --port 5192',
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
     url: 'http://127.0.0.1:5192/auth/login',

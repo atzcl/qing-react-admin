@@ -19,6 +19,7 @@ function testStore() {
       {
         affix: true,
         definitionPath: '/dashboard/analytics',
+        href: '/dashboard/analytics',
         params: {},
         path: '/dashboard/analytics',
         revision: 0,
@@ -31,9 +32,30 @@ function testStore() {
 describe('app store operations', () => {
   it('visits, refreshes, and closes retained pages', () => {
     const store = testStore()
-    visitTab(store, '/demos/features/tabs', '/demos/features/tabs', {}, 'menu.demos')
-    visitTab(store, '/examples/form/basic', '/examples/form/basic', {}, 'menu.examples')
-    visitTab(store, '/examples/form/basic', '/examples/form/basic', {}, 'menu.examples')
+    visitTab(
+      store,
+      '/demos/features/tabs',
+      '/demos/features/tabs',
+      '/demos/features/tabs',
+      {},
+      'menu.demos',
+    )
+    visitTab(
+      store,
+      '/examples/form/basic',
+      '/examples/form/basic?q=last',
+      '/examples/form/basic',
+      {},
+      'menu.examples',
+    )
+    visitTab(
+      store,
+      '/examples/form/basic',
+      '/examples/form/basic?q=last',
+      '/examples/form/basic',
+      {},
+      'menu.examples',
+    )
     expect(store.state.tabs).toHaveLength(3)
 
     refreshTab(store, '/demos/features/tabs')
@@ -51,11 +73,26 @@ describe('app store operations', () => {
 
   it('repairs stale route metadata for an existing tab path', () => {
     const store = testStore()
-    visitTab(store, '/examples/tiptap', '/dashboard/workspace', {}, 'menu.workspace')
-    visitTab(store, '/examples/tiptap', '/examples/tiptap', { section: 'editor' }, 'menu.examples')
+    visitTab(
+      store,
+      '/examples/tiptap',
+      '/examples/tiptap',
+      '/dashboard/workspace',
+      {},
+      'menu.workspace',
+    )
+    visitTab(
+      store,
+      '/examples/tiptap',
+      '/examples/tiptap?section=editor',
+      '/examples/tiptap',
+      { section: 'editor' },
+      'menu.examples',
+    )
 
     expect(store.state.tabs.find((tab) => tab.path === '/examples/tiptap')).toMatchObject({
       definitionPath: '/examples/tiptap',
+      href: '/examples/tiptap?section=editor',
       params: { section: 'editor' },
       titleKey: 'menu.examples',
     })

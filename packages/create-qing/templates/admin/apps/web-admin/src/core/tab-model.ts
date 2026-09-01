@@ -14,7 +14,7 @@ export type TabCommand =
   | { path: string; type: 'toggle-affix' }
 
 export interface TabCommandResult {
-  nextPath?: string
+  nextHref?: string
   tabs: AppTab[]
 }
 
@@ -36,14 +36,17 @@ export function constrainTabs(tabs: AppTab[], maxCount: number) {
   return tabs.filter((tab) => affixedPaths.has(tab.path) || recentOrdinaryPaths.has(tab.path))
 }
 
-function nextPathWhenCurrentWasRemoved(
+function nextHrefWhenCurrentWasRemoved(
   currentPath: string,
   tabs: AppTab[],
   preferredPath?: string,
 ) {
   if (tabs.some((tab) => tab.path === currentPath)) return undefined
-  if (preferredPath && tabs.some((tab) => tab.path === preferredPath)) return preferredPath
-  return tabs.find((tab) => tab.path === HOME_TAB_PATH)?.path ?? tabs[0]?.path ?? HOME_TAB_PATH
+  if (preferredPath) {
+    const preferredTab = tabs.find((tab) => tab.path === preferredPath)
+    if (preferredTab) return preferredTab.href
+  }
+  return tabs.find((tab) => tab.path === HOME_TAB_PATH)?.href ?? tabs[0]?.href ?? HOME_TAB_PATH
 }
 
 export function reduceTabCommand(
@@ -67,9 +70,9 @@ export function reduceTabCommand(
 
   if (command.type === 'close-all') {
     const nextTabs = tabs.filter((tab) => tab.affix)
-    const nextPath = nextPathWhenCurrentWasRemoved(currentPath, nextTabs)
+    const nextHref = nextHrefWhenCurrentWasRemoved(currentPath, nextTabs)
     return {
-      ...(nextPath ? { nextPath } : {}),
+      ...(nextHref ? { nextHref } : {}),
       tabs: nextTabs,
     }
   }
@@ -81,9 +84,9 @@ export function reduceTabCommand(
     if (tabs[targetIndex]?.affix) return { tabs }
     const fallback = tabs[targetIndex - 1]?.path ?? tabs[targetIndex + 1]?.path ?? HOME_TAB_PATH
     const nextTabs = tabs.filter((tab) => tab.affix || tab.path !== command.path)
-    const nextPath = nextPathWhenCurrentWasRemoved(currentPath, nextTabs, fallback)
+    const nextHref = nextHrefWhenCurrentWasRemoved(currentPath, nextTabs, fallback)
     return {
-      ...(nextPath ? { nextPath } : {}),
+      ...(nextHref ? { nextHref } : {}),
       tabs: nextTabs,
     }
   }
@@ -94,8 +97,8 @@ export function reduceTabCommand(
     if (command.type === 'close-right') return index <= targetIndex
     return tab.path === command.path
   })
-  const nextPath = nextPathWhenCurrentWasRemoved(currentPath, nextTabs, command.path)
-  return { ...(nextPath ? { nextPath } : {}), tabs: nextTabs }
+  const nextHref = nextHrefWhenCurrentWasRemoved(currentPath, nextTabs, command.path)
+  return { ...(nextHref ? { nextHref } : {}), tabs: nextTabs }
 }
 
 export function executeTabCommand(

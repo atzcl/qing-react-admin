@@ -7,23 +7,32 @@ const tabs: AppTab[] = [
   {
     affix: true,
     definitionPath: '/dashboard/analytics',
+    href: '/dashboard/analytics',
     params: {},
     path: '/dashboard/analytics',
     titleKey: 'menu.analytics',
   },
   {
     definitionPath: '/examples/form/basic',
+    href: '/examples/form/basic?qf=basic',
     params: {},
     path: '/examples/form/basic',
     titleKey: 'menu.examples',
   },
   {
     definitionPath: '/examples/modal',
+    href: '/examples/modal',
     params: {},
     path: '/examples/modal',
     titleKey: 'menu.examples',
   },
-  { definitionPath: '/system/user', params: {}, path: '/system/user', titleKey: 'menu.users' },
+  {
+    definitionPath: '/system/user',
+    href: '/system/user?status=1',
+    params: {},
+    path: '/system/user',
+    titleKey: 'menu.users',
+  },
 ]
 
 describe('tab command model', () => {
@@ -45,7 +54,7 @@ describe('tab command model', () => {
     })
 
     expect(result.tabs.map((tab) => tab.path)).toEqual(['/dashboard/analytics', '/system/user'])
-    expect(result.nextPath).toBe('/system/user')
+    expect(result.nextHref).toBe('/system/user?status=1')
   })
 
   it('keeps the URL when a bulk action does not remove the current route', () => {
@@ -59,7 +68,7 @@ describe('tab command model', () => {
       '/examples/modal',
       '/system/user',
     ])
-    expect(result.nextPath).toBeUndefined()
+    expect(result.nextHref).toBeUndefined()
   })
 
   it('refreshes through the same typed command interface', () => {
@@ -78,7 +87,7 @@ describe('tab command model', () => {
     })
 
     expect(result.tabs.find((tab) => tab.path === '/examples/modal')?.affix).toBe(true)
-    expect(result.nextPath).toBeUndefined()
+    expect(result.nextHref).toBeUndefined()
   })
 
   it('refuses to close an affixed tab or an unknown tab', () => {
@@ -99,7 +108,7 @@ describe('tab command model', () => {
       type: 'close',
     })
 
-    expect(result.nextPath).toBe('/examples/form/basic')
+    expect(result.nextHref).toBe('/examples/form/basic?qf=basic')
     expect(result.tabs.some((tab) => tab.path === '/examples/modal')).toBe(false)
   })
 
@@ -109,7 +118,7 @@ describe('tab command model', () => {
       type: 'close',
     })
 
-    expect(result.nextPath).toBeUndefined()
+    expect(result.nextHref).toBeUndefined()
     expect(result.tabs.some((tab) => tab.path === '/system/user')).toBe(true)
   })
 
@@ -117,7 +126,7 @@ describe('tab command model', () => {
     const result = reduceTabCommand(tabs, '/system/user', { type: 'close-all' })
 
     expect(result.tabs.map((tab) => tab.path)).toEqual(['/dashboard/analytics'])
-    expect(result.nextPath).toBe('/dashboard/analytics')
+    expect(result.nextHref).toBe('/dashboard/analytics')
   })
 
   it('handles right-side bulk removal and an empty tab set', () => {
@@ -129,9 +138,9 @@ describe('tab command model', () => {
       '/dashboard/analytics',
       '/examples/form/basic',
     ])
-    expect(right.nextPath).toBe('/examples/form/basic')
+    expect(right.nextHref).toBe('/examples/form/basic?qf=basic')
 
     const empty = reduceTabCommand([], '/missing', { type: 'close-all' })
-    expect(empty).toEqual({ nextPath: '/dashboard/analytics', tabs: [] })
+    expect(empty).toEqual({ nextHref: '/dashboard/analytics', tabs: [] })
   })
 })

@@ -183,6 +183,7 @@ export default function MenusPage() {
         columns={columns}
         dataSource={menus}
         defaultExpandAllRows
+        preferenceKey="system-menu"
         headerTitle="菜单列表"
         loading={menusQuery.isFetching || menuMutation.isPending}
         onRefresh={async () => {
