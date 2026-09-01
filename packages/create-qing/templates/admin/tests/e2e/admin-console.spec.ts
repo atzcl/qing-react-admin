@@ -587,6 +587,23 @@ test('watermark, value-format, department search and Activity regressions stay f
   await expect(page.locator('.system-user-main').getByLabel('用户名称')).toHaveValue('123')
 })
 
+test('user search draft survives Activity tab switches before querying', async ({ page }) => {
+  await loginAsSuper(page)
+  await page.goto('/system/user')
+
+  const userNameInput = page.locator('.system-user-main').getByLabel('用户名称')
+  await userNameInput.fill('123')
+
+  const sider = page.locator('.admin-sider')
+  await sider.locator('.ant-menu-item').filter({ hasText: '角色管理' }).click()
+  await expect(page).toHaveURL(/\/system\/role$/)
+  await expect(page.locator('.activity-page[data-page-path="/system/user"]')).toHaveCount(1)
+  await sider.locator('.ant-menu-item').filter({ hasText: '用户管理' }).click()
+
+  await expect(page).toHaveURL(/\/system\/user(?:\?|$)/)
+  await expect(page.locator('.system-user-main').getByLabel('用户名称')).toHaveValue('123')
+})
+
 test('menu, tabs, route and retained page content stay aligned', async ({ page }) => {
   await loginAsSuper(page)
 

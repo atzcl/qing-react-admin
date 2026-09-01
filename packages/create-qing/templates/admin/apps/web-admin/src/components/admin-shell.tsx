@@ -114,7 +114,12 @@ export function AdminShell({ user }: AdminShellProps) {
   const menuBadges = useAppSelector((state) => state.menuBadges)
   const routeState = useRouterState({
     select: (state) => {
-      let routePage: { definitionPath: string; params: Record<string, string> } | undefined
+      // `location` advances before the committed `matches` during navigation. Pairing the new
+      // pathname with stale route staticData rewrites retained-tab identities and remounts pages.
+      const matchedLocation = state.resolvedLocation ?? state.location
+      let routePage:
+        | { definitionPath: string; params: Record<string, string>; pathname: string }
+        | undefined
       for (let index = state.matches.length - 1; index >= 0; index -= 1) {
         const match = state.matches[index]
         const definitionPath = match?.staticData.adminPagePath
@@ -124,13 +129,14 @@ export function AdminShell({ user }: AdminShellProps) {
               (entry): entry is [string, string] => typeof entry[1] === 'string',
             ),
           )
-          routePage = { definitionPath, params }
+          routePage = { definitionPath, params, pathname: match.pathname }
           break
         }
       }
+      const pathname = routePage?.pathname ?? matchedLocation.pathname
       return {
-        currentHref: state.location.href,
-        pathname: state.location.pathname,
+        currentHref: matchedLocation.pathname === pathname ? matchedLocation.href : pathname,
+        pathname,
         routePage,
         status: state.status,
       }
