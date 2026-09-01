@@ -145,6 +145,7 @@ function ThemeProvider({ children }: PropsWithChildren) {
           ...(preferences.compact ? [theme.compactAlgorithm] : []),
         ],
         cssVar: { key: 'qing-react-admin' },
+        zeroRuntime: true,
         token: {
           borderRadius: preferences.radius,
           colorPrimary: preferences.colorPrimary,
