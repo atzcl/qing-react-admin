@@ -1,0 +1,5 @@
+interface:
+  display_name: 'Qing React Generator'
+  short_description: '使用命令行生成、注册、测试并交付后台页面和完整项目骨架'
+  brand_color: '#2563EB'
+  default_prompt: 'Use $qing-react-generator to scaffold and register a new admin page.'

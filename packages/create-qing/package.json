@@ -1,0 +1,33 @@
+{
+  "name": "create-qing",
+  "version": "0.1.0",
+  "description": "Scaffold and extend the Qing React Admin template.",
+  "license": "MIT",
+  "bin": {
+    "create-qing": "./bin/create-qing.mjs"
+  },
+  "files": [
+    "bin",
+    "src",
+    "templates"
+  ],
+  "type": "module",
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "test": "vitest run tests --exclude 'templates/**'",
+    "typecheck": "tsc --allowJs --checkJs --noEmit --module NodeNext --moduleResolution NodeNext --target ES2023 --types node src/*.mjs bin/*.mjs"
+  },
+  "dependencies": {
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  },
+  "engines": {
+    "node": ">=24.20.0"
+  }
+}

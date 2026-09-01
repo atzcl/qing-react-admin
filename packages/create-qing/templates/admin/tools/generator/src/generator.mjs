@@ -1,0 +1,148 @@
+import { mkdir, rm, writeFile } from 'node:fs/promises'
+import { dirname, resolve } from 'node:path'
+
+import { z } from 'zod'
+
+import { fileExists } from './files.mjs'
+import { humanize, kebabCase, parseRoute, pascalCase } from './names.mjs'
+
+const groupSchema = z.enum(['dashboard', 'demos', 'examples', 'system'])
+const roleSchema = z.enum(['admin', 'super', 'user'])
+
+/** @param {string} value */
+function quoted(value) {
+  return JSON.stringify(value)
+}
+
+/**
+ * File routes own URL matching and delegate policy to the auto-discovered feature manifest.
+ * @param {string} routeId
+ * @param {string} definitionPath
+ */
+function routeSource(routeId, definitionPath) {
+  return `import { createFileRoute } from '@tanstack/react-router'\n\nimport { beforeLoadAdminPage } from '~/core/admin-route'\n\nexport const Route = createFileRoute(${quoted(routeId)})({\n  beforeLoad: ({ context }) => beforeLoadAdminPage(${quoted(definitionPath)}, context.user),\n  staticData: { adminPagePath: ${quoted(definitionPath)} },\n})\n`
+}
+
+/** @param {{ componentName: string }} input */
+function pageSource({ componentName }) {
+  return `import { Card, Empty } from 'antd'\n\nimport { PageContainer } from '~/components/page-container'\n\nexport default function ${componentName}() {\n  return (\n    <PageContainer>\n      <Card variant="borderless">\n        <Empty description="在这里组合 QueryForm、ProTable 与业务操作。" />\n      </Card>\n    </PageContainer>\n  )\n}\n`
+}
+
+/**
+ * One colocated manifest replaces central registry and translation-file edits.
+ * @param {{ group: string, parsedRoles: string[], parsedRoute: string, title: string, titleEn: string, titleTw: string }} input
+ */
+function featureSource({ group, parsedRoles, parsedRoute, title, titleEn, titleTw }) {
+  const rolesLine = parsedRoles.length ? `  roles: ${JSON.stringify(parsedRoles)},\n` : ''
+  return `import { defineAdminFeature } from '~/core/admin-feature'\n\nexport default defineAdminFeature({\n  description: {\n    'en-US': ${quoted(`Manage ${titleEn.toLowerCase()} data and operations.`)},\n    'zh-CN': ${quoted(`管理${title}相关数据与操作`)},\n    'zh-TW': ${quoted(`管理${titleTw}相關資料與操作`)},\n  },\n  group: ${quoted(group)},\n  label: {\n    'en-US': ${quoted(titleEn)},\n    'zh-CN': ${quoted(title)},\n    'zh-TW': ${quoted(titleTw)},\n  },\n  loadPage: () => import('./page'),\n  path: ${quoted(parsedRoute)},\n${rolesLine}})\n`
+}
+
+/**
+ * @typedef GeneratePageInput
+ * @property {string} cwd
+ * @property {boolean} dryRun
+ * @property {string} group
+ * @property {string} name
+ * @property {string | undefined} roles
+ * @property {string} route
+ * @property {string} title
+ * @property {string} titleEn
+ * @property {string | undefined} [titleTw]
+ */
+
+/** @param {GeneratePageInput} input */
+export async function generatePage({
+  cwd,
+  dryRun,
+  group,
+  name,
+  roles,
+  route,
+  title,
+  titleEn,
+  titleTw = title,
+}) {
+  const root = resolve(cwd)
+  const normalizedName = kebabCase(name)
+  if (!normalizedName) throw new Error('Page name must contain at least one letter or digit')
+  const parsedRoute = parseRoute(route)
+  const parsedGroup = groupSchema.parse(group)
+  const parsedRoles = roles
+    ? z.array(roleSchema).parse([...new Set(roles.split(',').filter(Boolean))])
+    : []
+  const componentName = `${pascalCase(normalizedName)}Page`
+  const routeSegments = parsedRoute.slice(1).split('/')
+  const routeId = `/_app/${routeSegments.join('/')}`
+  const featureRoot = resolve(root, 'apps/web-admin/src/features', ...routeSegments)
+  const pagePath = resolve(featureRoot, 'page.tsx')
+  const featurePath = resolve(featureRoot, 'feature.ts')
+  const routePath = resolve(root, `apps/web-admin/src/routes/_app.${routeSegments.join('.')}.tsx`)
+
+  const generatedTargets = [pagePath, featurePath, routePath]
+  const collisions = (
+    await Promise.all(
+      generatedTargets.map(async (path) => ((await fileExists(path)) ? path : undefined)),
+    )
+  ).filter((path) => path !== undefined)
+  if (collisions.length > 0) {
+    throw new Error(`Generated file already exists: ${collisions.join(', ')}`)
+  }
+
+  const changedFiles = [featurePath, pagePath, routePath]
+  if (dryRun) {
+    process.stdout.write(
+      `Would generate self-registering ${componentName} at ${parsedRoute}:\n${changedFiles.map((file) => `  - ${file}`).join('\n')}\n`,
+    )
+    return { changedFiles, dryRun: true }
+  }
+
+  const createdFiles = []
+  try {
+    await mkdir(featureRoot, { recursive: true })
+    await mkdir(dirname(routePath), { recursive: true })
+    await writeFile(
+      featurePath,
+      featureSource({
+        group: parsedGroup,
+        parsedRoles,
+        parsedRoute,
+        title,
+        titleEn,
+        titleTw,
+      }),
+    )
+    createdFiles.push(featurePath)
+    await writeFile(pagePath, pageSource({ componentName }))
+    createdFiles.push(pagePath)
+    await writeFile(routePath, routeSource(routeId, parsedRoute))
+    createdFiles.push(routePath)
+  } catch (error) {
+    await Promise.all(createdFiles.map((file) => rm(file, { force: true })))
+    throw error
+  }
+
+  process.stdout.write(
+    `Generated self-registering ${componentName} at ${parsedRoute}. Run pnpm format && pnpm check.\n`,
+  )
+  return { changedFiles, dryRun: false }
+}
+
+/**
+ * @param {string} name
+ * @param {{ cwd?: string, dryRun: boolean, group?: string, roles?: string, route?: string, title?: string, titleEn?: string, titleTw?: string }} options
+ * @returns {GeneratePageInput}
+ */
+export function defaultPageOptions(name, options) {
+  const normalizedName = kebabCase(name)
+  return {
+    cwd: options.cwd ?? process.cwd(),
+    dryRun: options.dryRun,
+    group: options.group ?? 'demos',
+    name,
+    roles: options.roles,
+    route: options.route ?? `/demos/${normalizedName}`,
+    title: options.title ?? humanize(name),
+    titleEn: options.titleEn ?? humanize(name),
+    titleTw: options.titleTw ?? options.title ?? humanize(name),
+  }
+}

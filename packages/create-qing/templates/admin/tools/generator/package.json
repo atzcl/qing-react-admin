@@ -1,0 +1,16 @@
+{
+  "name": "@qing-react-admin/generator",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc6 --allowJs --checkJs --noEmit --module NodeNext --moduleResolution NodeNext --target ES2023 --types node src/*.mjs bin/*.mjs"
+  },
+  "dependencies": {
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "typescript": "catalog:"
+  }
+}

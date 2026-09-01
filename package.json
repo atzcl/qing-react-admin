@@ -1,0 +1,47 @@
+{
+  "name": "qing-react-admin-monorepo",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A browser-only React 19 administration workspace with TanStack Router and Ant Design 6.",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "build": "pnpm --filter @qing-react-admin/web-admin build",
+    "check": "pnpm routes:check && pnpm template:check && pnpm format:check && pnpm lint && pnpm build && pnpm typecheck && pnpm typecheck:compat && pnpm test && pnpm test:coverage && pnpm skills:validate",
+    "create:admin": "node packages/create-qing/bin/create-qing.mjs create",
+    "dev": "pnpm --filter @qing-react-admin/web-admin dev",
+    "format": "oxfmt --write .",
+    "format:check": "oxfmt --check .",
+    "generate": "node packages/create-qing/bin/create-qing.mjs generate",
+    "lint": "oxlint .",
+    "preview": "pnpm --filter @qing-react-admin/web-admin preview",
+    "routes:check": "node scripts/generate-admin-routes.mjs --check",
+    "routes:generate": "node scripts/generate-admin-routes.mjs",
+    "skills:validate": "node scripts/validate-skills.mjs",
+    "template:check": "node scripts/sync-template.mjs --check",
+    "template:sync": "node scripts/sync-template.mjs",
+    "test": "pnpm -r --if-present run test",
+    "test:e2e": "playwright test",
+    "test:coverage": "pnpm --filter @qing-react-admin/web-admin test:coverage",
+    "test:watch": "vitest",
+    "typecheck": "pnpm -r --if-present run typecheck",
+    "typecheck:compat": "pnpm -r --if-present run typecheck:compat",
+    "typecheck:native": "pnpm -r --if-present run typecheck:native"
+  },
+  "devDependencies": {
+    "@playwright/test": "catalog:",
+    "@typescript/native": "npm:typescript@7.0.2",
+    "@vitest/coverage-v8": "catalog:",
+    "oxfmt": "catalog:",
+    "oxlint": "catalog:",
+    "oxlint-tsgolint": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:",
+    "zod": "catalog:"
+  },
+  "engines": {
+    "node": ">=24.20.0",
+    "pnpm": ">=11.0.0"
+  },
+  "packageManager": "pnpm@11.22.0"
+}

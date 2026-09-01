@@ -1,0 +1,5 @@
+interface:
+  display_name: 'Qing React Quality'
+  short_description: '验证 Oxc、TypeScript、Vitest 与生产构建'
+  brand_color: '#059669'
+  default_prompt: 'Use $qing-react-quality to run the repository quality gate and diagnose failures.'

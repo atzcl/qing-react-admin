@@ -1,0 +1,5 @@
+interface:
+  display_name: 'Qing React Admin'
+  short_description: '维护 React 19 与 TanStack Router 纯 CSR 管理后台'
+  brand_color: '#7C3AED'
+  default_prompt: 'Use $qing-react-admin to implement a repository-consistent admin feature.'

@@ -1,0 +1,15 @@
+.button-list {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--button-list-gap, 8px);
+}
+
+.button-list__dropdown-icon {
+  margin-inline-start: 4px;
+  font-size: 10px;
+}
+
+.button-list__text-action {
+  padding-inline: 6px;
+}

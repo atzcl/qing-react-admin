@@ -1,0 +1,135 @@
+:root {
+  color: #1f2329;
+  font-family:
+    Inter,
+    ui-sans-serif,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  --app-bg: #f5f6f8;
+  --app-border: rgb(5 5 5 / 8%);
+  --app-card: #fff;
+  --app-elevated: #fff;
+  --app-muted: rgb(0 0 0 / 45%);
+  --app-nav-bg: #fff;
+  --app-nav-text: rgb(0 0 0 / 65%);
+  --app-shadow:
+    0 0 0 1px rgb(0 0 0 / 5%), 0 1px 2px -1px rgb(0 0 0 / 6%), 0 2px 5px rgb(0 0 0 / 3%);
+  --app-shadow-hover:
+    0 0 0 1px rgb(0 0 0 / 7%), 0 2px 4px -1px rgb(0 0 0 / 7%), 0 6px 14px rgb(0 0 0 / 5%);
+  --app-soft-shadow: 0 10px 32px rgb(15 23 42 / 10%);
+  --app-text: rgb(0 0 0 / 88%);
+  --app-text-secondary: rgb(0 0 0 / 65%);
+}
+
+:root[data-theme='dark'] {
+  color: #e7e9ee;
+  --app-bg: #000;
+  --app-border: rgb(255 255 255 / 12%);
+  --app-card: #141414;
+  --app-elevated: #1f1f1f;
+  --app-muted: rgb(255 255 255 / 45%);
+  --app-nav-bg: #141414;
+  --app-nav-text: rgb(255 255 255 / 65%);
+  --app-shadow: 0 0 0 1px rgb(255 255 255 / 9%);
+  --app-shadow-hover: 0 0 0 1px rgb(255 255 255 / 14%);
+  --app-soft-shadow: 0 16px 44px rgb(0 0 0 / 24%);
+  --app-text: rgb(255 255 255 / 85%);
+  --app-text-secondary: rgb(255 255 255 / 65%);
+}
+
+/* ConfigProvider CSS variables are scoped to the Ant Design app root. Keep
+ * the shared app tokens in that scope so the dark algorithm reaches every
+ * shell surface instead of resolving the light fallback on :root first. */
+.app-provider {
+  --app-bg: var(--ant-color-bg-layout, #f5f6f8);
+  --app-border: var(--ant-color-border-secondary, rgb(5 5 5 / 8%));
+  --app-card: var(--ant-color-bg-container, #fff);
+  --app-elevated: var(--ant-color-bg-elevated, #fff);
+  --app-muted: var(--ant-color-text-tertiary, rgb(0 0 0 / 45%));
+  --app-nav-bg: var(--ant-color-bg-container, #fff);
+  --app-nav-text: var(--ant-color-text-secondary, rgb(0 0 0 / 65%));
+  --app-text: var(--ant-color-text, rgb(0 0 0 / 88%));
+  --app-text-secondary: var(--ant-color-text-secondary, rgb(0 0 0 / 65%));
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--app-bg);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+html,
+body,
+#app {
+  min-height: 100%;
+  margin: 0;
+}
+
+body {
+  min-width: 320px;
+  background: var(--app-bg);
+  color: var(--app-text);
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+button {
+  -webkit-tap-highlight-color: transparent;
+}
+
+a {
+  color: inherit;
+}
+
+::selection {
+  color: #fff;
+  background: var(--ant-color-primary, #7c3aed);
+}
+
+.app-provider,
+.admin-layout {
+  min-height: 100vh;
+}
+
+.navigation-progress {
+  position: fixed;
+  z-index: 2000;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 2px;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.navigation-progress::after {
+  display: block;
+  width: 35%;
+  height: 100%;
+  background: var(--ant-color-primary, #7c3aed);
+  box-shadow: 0 0 12px var(--ant-color-primary, #7c3aed);
+  content: '';
+  animation: navigation-progress 1s ease-in-out infinite;
+}
+
+@keyframes navigation-progress {
+  from {
+    transform: translateX(-110%);
+  }
+  to {
+    transform: translateX(390%);
+  }
+}
