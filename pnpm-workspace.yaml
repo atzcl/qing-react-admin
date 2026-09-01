@@ -3,7 +3,7 @@ packages:
   - packages/*
 
 catalog:
-  '@ant-design/icons': 6.3.2
+  '@ant-design/icons': 6.3.4
   '@iconify/react': 6.0.2
   '@playwright/test': 1.62.1
   '@tanstack/react-form': 1.33.5
@@ -12,10 +12,10 @@ catalog:
   '@tanstack/react-router': 1.170.32
   '@tanstack/react-router-devtools': 1.167.1
   '@tanstack/react-store': 0.11.1
-  '@tanstack/react-table': 9.2.3
+  '@tanstack/react-table': 9.2.4
   '@tanstack/react-virtual': 3.14.10
   '@tanstack/router-plugin': 1.168.35
-  '@testing-library/react': 16.3.2
+  '@testing-library/react': 16.3.3
   '@testing-library/user-event': 14.6.6
   '@types/node': 26.4.0
   '@types/react': 19.2.18
@@ -29,9 +29,9 @@ catalog:
   '@uiw/react-json-view': 2.0.0-alpha.43
   '@vitejs/plugin-react': 6.1.1
   '@vitest/coverage-v8': 4.1.11
-  antd: 6.6.1
+  antd: 6.6.2
   dayjs: 1.11.23
-  happy-dom: 20.11.9
+  happy-dom: 20.12.0
   oxc-transform-react: 0.145.0
   oxfmt: 0.65.0
   oxlint: 1.80.0
@@ -44,7 +44,7 @@ catalog:
   typescript: npm:@typescript/typescript6@6.0.2
   vite: 8.2.2
   vitest: 4.1.11
-  zod: 4.4.3
+  zod: 4.5.4
   '@tiptap/extension-highlight': 3.30.5
   '@tiptap/extension-link': 3.30.5
   '@tiptap/extension-text-style': 3.30.5
@@ -56,9 +56,6 @@ minimumReleaseAgeExclude:
   - '@tanstack/query-devtools@5.102.8'
   - '@tanstack/react-query-devtools@5.102.8'
   - '@tanstack/react-query@5.102.8'
-  - '@tanstack/react-table@9.2.3'
-  - '@tanstack/table-core@9.2.3'
   - '@types/node@26.4.0'
-  - happy-dom@20.11.9
   - '@vitejs/plugin-react@6.1.1'
 strictPeerDependencies: true
