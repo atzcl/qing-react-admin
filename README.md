@@ -10,6 +10,8 @@
 
 基于 React 19、TanStack Router 与 Ant Design 6 的纯 CSR 管理后台。项目提供完整的认证、权限、导航、页签状态保留（keep alive）、主题、国际化、业务表格与表单能力，同时包含可分发的项目脚手架和页面生成器。
 
+**在线演示：** [https://qing-react-admin.qrunai.com](https://qing-react-admin.qrunai.com)
+
 ## 项目来源
 
 项目最初参考 [vue-vben-admin](https://github.com/vbenjs/vue-vben-admin) 的产品思路与功能覆盖，并在 React 技术栈中重新设计、适配与升级。当前代码、组件模型、状态管理、路由和工程体系均按 React 生态独立实现。

@@ -98,13 +98,18 @@ await Promise.all([
   addFile({ source: '.oxlintrc.json', target: '.oxlintrc.json.template-file' }),
   addFile({
     source: 'README.md',
-    replacements: { '# Qing React Admin': '# %%PROJECT_NAME%%' },
+    replacements: {
+      '# Qing React Admin': '# %%PROJECT_NAME%%',
+      '**在线演示：** [https://qing-react-admin.qrunai.com](https://qing-react-admin.qrunai.com)\n\n':
+        '',
+    },
   }),
 ])
 
 const rootPackage = JSON.parse(await readFile(resolve(repositoryRoot, 'package.json'), 'utf8'))
 rootPackage.name = '__PROJECT_NAME__'
 delete rootPackage.scripts['create:admin']
+delete rootPackage.scripts['deploy:cloudflare']
 delete rootPackage.scripts['template:check']
 delete rootPackage.scripts['template:sync']
 rootPackage.scripts.check = rootPackage.scripts.check.replace('pnpm template:check && ', '')

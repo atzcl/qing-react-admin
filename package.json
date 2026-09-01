@@ -9,6 +9,7 @@
     "build": "pnpm --filter @qing-react-admin/web-admin build",
     "check": "pnpm routes:check && pnpm template:check && pnpm format:check && pnpm lint && pnpm build && pnpm typecheck && pnpm typecheck:compat && pnpm test && pnpm test:coverage && pnpm skills:validate",
     "create:admin": "node packages/create-qing/bin/create-qing.mjs create",
+    "deploy:cloudflare": "pnpm build && pnpm dlx wrangler@4.127.1 deploy",
     "dev": "pnpm --filter @qing-react-admin/web-admin dev",
     "format": "oxfmt --write .",
     "format:check": "oxfmt --check .",
