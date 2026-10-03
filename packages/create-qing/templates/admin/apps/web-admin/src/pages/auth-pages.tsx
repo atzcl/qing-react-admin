@@ -53,7 +53,7 @@ export const codeLoginSchema = z.object({
 })
 
 export const forgetPasswordSchema = z.object({
-  email: z.string().min(1, '请输入邮箱').email('邮箱格式错误'),
+  email: z.string().min(1, '请输入邮箱').pipe(z.email('邮箱格式错误')),
 })
 
 export const registerSchema = z

@@ -160,7 +160,7 @@ function ConcurrencyCaching() {
   const [loadedOptions, setLoadedOptions] = useState(menuOptions)
 
   async function fetchOptions() {
-    const options = await queryClient.fetchQuery(menuQueryOptions)
+    const options = await queryClient.query(menuQueryOptions)
     setLoadedOptions(options)
   }
 

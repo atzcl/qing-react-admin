@@ -5,57 +5,59 @@ packages:
 catalog:
   '@ant-design/icons': 6.3.4
   '@iconify/react': 6.0.2
-  '@playwright/test': 1.62.1
+  '@playwright/test': 1.63.0
   '@tanstack/react-form': 1.33.5
-  '@tanstack/react-query': 5.102.8
-  '@tanstack/react-query-devtools': 5.102.8
-  '@tanstack/react-router': 1.170.32
-  '@tanstack/react-router-devtools': 1.167.1
-  '@tanstack/react-store': 0.11.1
+  '@tanstack/react-query': 5.104.0
+  '@tanstack/react-query-devtools': 5.104.0
+  '@tanstack/react-router': 1.170.41
+  '@tanstack/react-router-devtools': 1.167.2
+  '@tanstack/react-store': 0.11.2
   '@tanstack/react-table': 9.2.4
-  '@tanstack/react-virtual': 3.14.10
-  '@tanstack/router-plugin': 1.168.35
+  '@tanstack/react-virtual': 3.14.13
+  '@tanstack/router-plugin': 1.168.42
   '@testing-library/react': 16.3.3
-  '@testing-library/user-event': 14.6.6
-  '@types/node': 26.4.0
-  '@types/react': 19.2.18
-  '@types/react-dom': 19.2.5
-  '@tiptap/extension-image': 3.30.5
-  '@tiptap/extension-placeholder': 3.30.5
-  '@tiptap/extension-text-align': 3.30.5
-  '@tiptap/extension-underline': 3.30.5
-  '@tiptap/react': 3.30.5
-  '@tiptap/starter-kit': 3.30.5
+  '@testing-library/user-event': 14.6.7
+  '@types/node': 26.6.4
+  '@types/react': 19.3.0
+  '@types/react-dom': 19.3.0
+  '@tiptap/extension-image': 3.31.4
+  '@tiptap/extension-placeholder': 3.31.4
+  '@tiptap/extension-text-align': 3.31.4
+  '@tiptap/extension-underline': 3.31.4
+  '@tiptap/react': 3.31.4
+  '@tiptap/starter-kit': 3.31.4
   '@uiw/react-json-view': 2.0.0-alpha.43
   '@vitejs/plugin-react': 6.1.1
-  '@vitest/coverage-v8': 4.1.11
-  antd: 6.6.2
+  '@vitest/coverage-v8': 5.0.3
+  antd: 6.6.5
   dayjs: 1.11.23
-  happy-dom: 20.12.0
+  happy-dom: 20.14.5
   oxc-transform-react: 0.145.0
-  oxfmt: 0.65.0
-  oxlint: 1.80.0
-  oxlint-tsgolint: 7.0.2001
+  oxfmt: 0.71.0
+  oxlint: 1.86.0
+  oxlint-tsgolint: 7.0.2003
   qrcode.react: 4.2.0
-  motion: 13.1.1
-  react: 19.2.8
-  react-dom: 19.2.8
+  motion: 13.5.0
+  react: 19.3.0
+  react-dom: 19.3.0
   tippy.js: 6.3.7
   typescript: npm:@typescript/typescript6@6.0.2
-  vite: 8.2.2
-  vitest: 4.1.11
-  zod: 4.5.4
-  '@tiptap/extension-highlight': 3.30.5
-  '@tiptap/extension-link': 3.30.5
-  '@tiptap/extension-text-style': 3.30.5
+  vite: 8.3.2
+  vitest: 5.0.3
+  zod: 4.6.5
+  '@tiptap/extension-highlight': 3.31.4
+  '@tiptap/extension-link': 3.31.4
+  '@tiptap/extension-text-style': 3.31.4
 
 catalogMode: strict
 cleanupUnusedCatalogs: true
+overrides:
+  ansi-regex@5: 5.0.1
 minimumReleaseAgeExclude:
-  - '@tanstack/query-core@5.102.8'
-  - '@tanstack/query-devtools@5.102.8'
-  - '@tanstack/react-query-devtools@5.102.8'
-  - '@tanstack/react-query@5.102.8'
-  - '@types/node@26.4.0'
+  - '@tanstack/query-core@5.104.0'
+  - '@tanstack/query-devtools@5.104.0'
+  - '@tanstack/react-query-devtools@5.104.0'
+  - '@tanstack/react-query@5.104.0'
+  - '@types/node@26.6.4'
   - '@vitejs/plugin-react@6.1.1'
 strictPeerDependencies: true

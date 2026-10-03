@@ -63,7 +63,10 @@ function routeSource(definitionPath) {
   const options = [
     beforeLoad.length <= 100 ? beforeLoad : `  beforeLoad: ({ context }) =>\n    ${beforeLoadCall}`,
     ...(analytics
-      ? ['  loader: ({ context }) => context.queryClient.ensureQueryData(analyticsQueryOptions),']
+      ? [
+          '  loader: ({ context }) =>',
+          "    context.queryClient.query({ ...analyticsQueryOptions, staleTime: 'static' }),",
+        ]
       : []),
     `  staticData: { adminPagePath: ${quoted(definitionPath)} },`,
   ]

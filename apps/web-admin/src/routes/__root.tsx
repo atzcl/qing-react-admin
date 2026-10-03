@@ -29,7 +29,7 @@ export const Route = createRootRouteWithContext<RouterContext>()({
           </Button>
         }
         status="500"
-        subTitle={error.message}
+        subTitle={error instanceof Error ? error.message : String(error)}
         title="页面加载失败"
       />
     </RootProviders>
