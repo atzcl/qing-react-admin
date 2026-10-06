@@ -204,18 +204,9 @@
     font-size: 20px;
   }
 
-  .trend-chart svg,
-  .bar-chart svg {
-    height: 220px;
-  }
-
-  .trend-chart__legend {
-    gap: 10px;
-  }
-
-  .trend-chart figcaption span:nth-child(even),
-  .bar-chart figcaption span:nth-child(even) {
-    display: none;
+  .trend-chart,
+  .bar-chart {
+    height: 220px !important;
   }
 
   .donut-chart-wrap {
@@ -224,10 +215,7 @@
 
   .donut-chart {
     width: 112px;
-  }
-
-  .donut-chart__label {
-    inset-inline-start: 56px;
+    height: 112px;
   }
 
   .workspace-hero {
