@@ -9,6 +9,34 @@ import { ProTableLocaleProvider } from '~/components/pro-table'
 import { QueryFormLocaleProvider } from '~/components/query-form'
 import { AppStoreProvider, useAppSelector } from '~/core/app-store'
 
+/**
+ * 跟随系统「减弱动态效果」（`prefers-reduced-motion: reduce`）。
+ *
+ * 该偏好开启时，若 antd 弹层（Select / Dropdown / Tooltip / DatePicker …）仍走 CSS 入场动画，
+ * 其动画时长可能被系统/无障碍样式压到亚帧级，导致弹层卡在 `opacity:0` 的入场首帧、
+ * 表现为「点了下拉不出现」。正确做法不是在 CSS 里用 `*` 强压时长，而是走 antd 官方途径把
+ * `token.motion` 关掉：`ConfigProvider` 内的 `MotionWrapper` 会把 `motion=false` 注入 rc-motion
+ * 上下文，弹层不再挂 `-enter/-appear` 类，直接以最终态渲染——既尊重「减弱动态效果」，
+ * 又不会产生不可见的弹层。
+ */
+function usePrefersReducedMotion() {
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(
+    () =>
+      typeof window !== 'undefined' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+  )
+
+  useEffect(() => {
+    const media = window.matchMedia('(prefers-reduced-motion: reduce)')
+    const update = () => setPrefersReducedMotion(media.matches)
+    update()
+    media.addEventListener('change', update)
+    return () => media.removeEventListener('change', update)
+  }, [])
+
+  return prefersReducedMotion
+}
+
 function suppressThemeTransitions() {
   const style = document.createElement('style')
   style.textContent = '*,*::before,*::after{transition:none!important}'
@@ -19,6 +47,7 @@ function suppressThemeTransitions() {
 
 function ThemeProvider({ children }: PropsWithChildren) {
   const preferences = useAppSelector((state) => state.preferences)
+  const prefersReducedMotion = usePrefersReducedMotion()
   const [systemDark, setSystemDark] = useState(false)
   const isDark =
     preferences.colorMode === 'dark' || (preferences.colorMode === 'system' && systemDark)
@@ -153,7 +182,7 @@ function ThemeProvider({ children }: PropsWithChildren) {
           fontWeightStrong: 600,
           fontFamily:
             "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif",
-          motion: preferences.animations,
+          motion: preferences.animations && !prefersReducedMotion,
         },
         components: {
           Card: {

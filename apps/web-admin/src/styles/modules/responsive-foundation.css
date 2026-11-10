@@ -296,12 +296,28 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  /*
+   * 这里刻意**不**在 `*` 上写 animation-duration / transition-duration。
+   * - `transition-property` 的初始值是 `all`，给 `*` 设过渡时长等于给全站每个元素
+   *   都「打开」了过渡，会与 antd 弹层的定位重排相互冲刷（历史上伴随 561 次
+   *   transitionrun / 139 次 transitioncancel）；
+   * - `animation-duration` 又会把 antd 弹层入场动画压到亚帧级，使弹层停在
+   *   `opacity:0` 的入场首帧——就是「prefers-reduced-motion 下所有下拉点了不出现」的真因。
+   * antd 组件自身的动画统一由 ConfigProvider 的 `token.motion` 关闭（见
+   * components/app-providers.tsx 的 usePrefersReducedMotion）；此块只收敛本应用自己的
+   * 装饰性动效（页面进入、顶部进度条、登录页装饰），且只改 animation-*，不碰 transition。
+   */
   *,
   *::before,
   *::after {
     scroll-behavior: auto !important;
+  }
+
+  .activity-page,
+  .navigation-progress,
+  [class^='auth-'],
+  [class*=' auth-'] {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
   }
 }

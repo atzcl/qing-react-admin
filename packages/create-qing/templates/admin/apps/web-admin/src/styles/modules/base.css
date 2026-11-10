@@ -62,6 +62,11 @@
 
 html {
   background: var(--app-bg);
+  /* Windows 的经典滚动条占布局宽度（DPR 1.5 下约 23px）。文档一旦在「有滚动条 / 无滚动条」
+     之间来回切换，视口内容宽就随之抖动，整页横向重排；而 antd 弹层（rc-trigger useAlign
+     用 documentElement.clientWidth/clientHeight 当边界）又会因边界跳变重写 top/left/right，
+     形成测量 ↔ 写样式自激环。预留滚动条槽位让文档宽度恒定。 */
+  scrollbar-gutter: stable;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
